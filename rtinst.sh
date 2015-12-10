@@ -3,7 +3,7 @@
 ######################################################################
 #
 #  Copyright (c) 2015 arakasi72 (https://github.com/arakasi72)
-# 
+#
 #  --> Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 #
 ######################################################################
@@ -17,7 +17,7 @@ libtorrentloc='http://rtorrent.net/downloads/libtorrent-'$libtorrentrel'.tar.gz'
 xmlrpcloc='https://svn.code.sf.net/p/xmlrpc-c/code/stable'
 
 BLOB=master
-RTDIR=https://raw.githubusercontent.com/Hernandy/rtinst/$BLOB/scripts
+RTDIR=https://raw.githubusercontent.com/arakasi72/rtinst/$BLOB/scripts
 
 FULLREL=$(cat /etc/issue.net)
 OSNAME=$(cat /etc/issue.net | cut -d' ' -f1)
@@ -67,7 +67,7 @@ random()
     echo $RAND
 }
 
-# function to ask user for y/n response 
+# function to ask user for y/n response
 ask_user(){
 while true
   do
@@ -313,6 +313,111 @@ service ssh restart
 sshport=$(grep 'Port ' /etc/ssh/sshd_config | sed 's/[^0-9]*//g')
 echo "SSH secured. Port set to $sshport"
 
+# install ftp
+
+ftpport=$(random 41005 48995)
+
+if [ $(dpkg-query -W -f='${Status}' "vsftpd" 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+  echo "Installing vsftpd" | tee -a $logfile
+
+  if [ $RELNO = 12 ]; then
+    add-apt-repository -y ppa:thefrontiergroup/vsftpd >> $logfile 2>&1
+    apt-get update >> $logfile 2>&1
+    apt-get -y install vsftpd >> $logfile 2>&1
+  elif [ $RELNO = 7 ]; then
+    echo "deb http://ftp.cyconet.org/debian wheezy-updates main non-free contrib" >> /etc/apt/sources.list.d/wheezy-updates.cyconet2.list
+    aptitude update  >> $logfile 2>&1 || error_exit "problem updating package lists"
+    aptitude -o Aptitude::Cmdline::ignore-trust-violations=true -y install -t wheezy-updates debian-cyconet-archive-keyring vsftpd  >> $logfile 2>&1 || error_exit "Unable to download vsftpd"
+  else
+    apt-get -y install vsftpd >> $logfile 2>&1
+  fi
+
+fi
+echo "Configuring vsftpd" | tee -a $logfile
+
+sed -i '/^#\?anonymous_enable/ c\anonymous_enable=NO' /etc/vsftpd.conf
+sed -i '/^#\?local_enable/ c\local_enable=YES' /etc/vsftpd.conf
+sed -i '/^#\?write_enable/ c\write_enable=YES' /etc/vsftpd.conf
+sed -i '/^#\?local_umask/ c\local_umask=022' /etc/vsftpd.conf
+sed -i '/^#\?listen=/ c\listen=YES' /etc/vsftpd.conf
+sed -i 's/^listen_ipv6/#listen_ipv6/g' /etc/vsftpd.conf
+sed -i 's/^rsa_private_key_file/#rsa_private_key_file/g' /etc/vsftpd.conf
+sed -i '/^rsa_cert_file/ c\rsa_cert_file=\/etc\/ssl\/private\/vsftpd\.pem' /etc/vsftpd.conf
+
+grep ^listen_port /etc/vsftpd.conf > /dev/null || echo "listen_port=$ftpport" >> /etc/vsftpd.conf
+
+if [ -z "$(grep ^ssl_enable /etc/vsftpd.conf)" ]; then
+  echo "ssl_enable=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^ssl_enable/ c\ssl_enable=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^chroot_local_user /etc/vsftpd.conf)" ];then
+  echo "chroot_local_user=YES" >> /etc/vsftpd.conf
+else
+ sed -i '/^chroot_local_user/ c\chroot_local_user=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^allow_writeable_chroot /etc/vsftpd.conf)" ]; then
+   echo "allow_writeable_chroot=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^allow_writeable_chroot/ c\allow_writeable_chroot=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^allow_anon_ssl /etc/vsftpd.conf)" ];then
+  echo "allow_anon_ssl=NO" >> /etc/vsftpd.conf
+else
+   sed -i '/^allow_anon_ssl/ c\allow_anon_ssl=NO' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^force_local_data_ssl /etc/vsftpd.conf)" ];then
+  echo "force_local_data_ssl=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^force_local_data_ssl/ c\force_local_data_ssl=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^force_local_logins_ssl /etc/vsftpd.conf)" ];then
+  echo "force_local_logins_ssl=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^force_local_logins_ssl/ c\force_local_logins_ssl=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^ssl_sslv2 /etc/vsftpd.conf)" ];then
+  echo "ssl_sslv2=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^ssl_sslv2/ c\ssl_sslv2=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^ssl_sslv3 /etc/vsftpd.conf)" ];then
+  echo "ssl_sslv3=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^ssl_sslv3/ c\ssl_sslv3=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^ssl_tlsv1 /etc/vsftpd.conf)" ];then
+  echo "ssl_tlsv1=YES" >> /etc/vsftpd.conf
+else
+  sed -i '/^ssl_tlsv1/ c\ssl_tlsv1=YES' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^require_ssl_reuse /etc/vsftpd.conf)" ];then
+  echo "require_ssl_reuse=NO" >> /etc/vsftpd.conf
+else
+  sed -i '/^require_ssl_reuse/ c\require_ssl_reuse=NO' /etc/vsftpd.conf
+fi
+
+if [ -z "$(grep ^ssl_ciphers /etc/vsftpd.conf)" ];then
+  echo "ssl_ciphers=HIGH" >> /etc/vsftpd.conf
+else
+  sed -i '/^ssl_ciphers/ c\ssl_ciphers=HIGH' /etc/vsftpd.conf
+fi
+
+openssl req -x509 -nodes -days 3650 -subj /CN=$SERVERIP -newkey rsa:2048 -keyout /etc/ssl/private/vsftpd.pem -out /etc/ssl/private/vsftpd.pem >> $logfile 2>&1
+
+service vsftpd restart
+
+ftpport=$(grep 'listen_port=' /etc/vsftpd.conf | sed 's/[^0-9]*//g')
+echo "FTP port set to $ftpport"
 
 # install rtorrent
 if [ $install_rt = 0 ]; then
