@@ -313,6 +313,7 @@ service ssh restart
 sshport=$(grep 'Port ' /etc/ssh/sshd_config | sed 's/[^0-9]*//g')
 echo "SSH secured. Port set to $sshport"
 
+
 # install rtorrent
 if [ $install_rt = 0 ]; then
   cd $home
