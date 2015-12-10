@@ -14,7 +14,7 @@ rtorrentrel='0.9.6'
 libtorrentrel='0.13.6'
 rtorrentloc='http://rtorrent.net/downloads/rtorrent-'$rtorrentrel'.tar.gz'
 libtorrentloc='http://rtorrent.net/downloads/libtorrent-'$libtorrentrel'.tar.gz'
-xmlrpcloc='https://svn.code.sf.net/p/xmlrpc-c/code/stable'
+xmlrpcloc='http://svn.code.sf.net/p/xmlrpc-c/code/stable'
 
 BLOB=master
 RTDIR=https://raw.githubusercontent.com/arakasi72/rtinst/$BLOB/scripts
@@ -322,7 +322,7 @@ if [ $install_rt = 0 ]; then
   cd source
   echo "Downloading rtorrent source files" | tee -a $logfile
 
-  svn co $xmlrpcloc xmlrpc  >> $logfile 2>&1 || error_exit "Unable to download xmlrpc source files from https://svn.code.sf.net/p/xmlrpc-c/code/stable"
+  svn co $xmlrpcloc xmlrpc  >> $logfile 2>&1 || error_exit "Unable to download xmlrpc source files from http://svn.code.sf.net/p/xmlrpc-c/code/stable"
   curl -# $libtorrentloc | tar xz  >> $logfile 2>&1 || error_exit "Unable to download libtorrent source files from http://libtorrent.rakshasa.no/downloads"
   curl -# $rtorrentloc | tar xz  >> $logfile 2>&1 || error_exit "Unable to download rtorrent source files from http://libtorrent.rakshasa.no/downloads"
 
