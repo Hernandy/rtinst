@@ -1,3 +1,11 @@
+im learning github lol
+
+sorry if i messedup
+
+
+
+
+
 ###rtinst
 **NOTE 8th Nov 2015** - Reorganised repository. For existing installations run rtgetscripts twice to bring all your scripts up to date. First time will update rtgetscripts, 2nd time will update all scripts
 
